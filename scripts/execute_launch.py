@@ -1,4 +1,4 @@
-# scripts/execute_launch.py - Matplotlib Fix Version
+# scripts/execute_launch.py - Matplotlib Fix & Share Argument Fix
 import os
 import sys
 import json
@@ -11,22 +11,20 @@ from typing import Dict, Any, Optional, List
 # --- Setup and Helpers ---
 def get_project_root():
     """
-    Version: 1.0.1 - Improved path resolution for reliability
+    Version: 1.0.2 - Added Share Argument Fix
     Gets the project root directory. Prioritizes the environment variable
     set by Cell 1 for maximum reliability.
     """
-    # Prioritize environment variable set by the notebook cells
     env_root = os.environ.get('TRINITY_PROJECT_ROOT')
     if env_root and Path(env_root).exists():
         return Path(env_root)
     
-    # Fallback methods for direct execution
     current = Path.cwd()
     if (current / 'scripts').exists():
         return current
     if (current.parent / 'scripts').exists():
         return current.parent
-    return Path.cwd() # Last resort
+    return Path.cwd()
 
 def detect_environment():
     if 'COLAB_GPU' in os.environ: return 'colab'
@@ -34,7 +32,7 @@ def detect_environment():
 
 PROJECT_ROOT = get_project_root()
 WEBUI_ROOT = Path('/content')
-TRINITY_VERSION = "1.3.4" # Version bump for matplotlib fix
+TRINITY_VERSION = "1.3.5" # Version bump for share fix
 CONFIG_PATH = PROJECT_ROOT / "trinity_config.json"
 LOG_FILE = PROJECT_ROOT / "trinity_unified.log"
 ENV_TYPE = detect_environment()
@@ -58,7 +56,7 @@ def load_config() -> Dict[str, Any]:
 
 def construct_launch_command(config: Dict[str, Any]) -> Optional[List[str]]:
     """
-    Version: 1.0.1 - Enhanced error handling and validation
+    Version: 1.0.2 - Fixed logic to ensure --share is always added for Gradio tunnels
     Constructs the launch command using the correct venv.
     """
     webui_choice = config.get("webui_choice", "A1111")
@@ -70,21 +68,28 @@ def construct_launch_command(config: Dict[str, Any]) -> Optional[List[str]]:
         log_to_unified(f"Venv Python not found at {venv_python}!", "ERROR")
         return None
 
+    # Start with the python executable and the launch script
     args = [str(venv_python), "launch.py"]
     
+    # Parse custom arguments from the config file
     custom_args_str = config.get("custom_args", "")
+    parsed_args = []
     if custom_args_str:
         try:
-            args.extend(shlex.split(custom_args_str))
+            parsed_args = shlex.split(custom_args_str)
         except Exception as e:
             log_to_unified(f"Error parsing custom args: {e}. Using without custom args.", "WARNING")
-        
+
+    # Ensure essential arguments are present
     tunnel = config.get("tunnel_choice", "Gradio")
-    if tunnel == "Gradio" and '--share' not in args:
-        args.append('--share')
+    if tunnel == "Gradio" and '--share' not in parsed_args:
+        parsed_args.append('--share')
     
-    if '--xformers' not in args:
-        args.append('--xformers')
+    if '--xformers' not in parsed_args:
+        parsed_args.append('--xformers')
+        
+    # Add the parsed and validated arguments to the final command
+    args.extend(parsed_args)
     
     return args
 
@@ -109,14 +114,10 @@ def launch_webui(config: Dict[str, Any]) -> bool:
     print("\n" + "="*50 + f"\n🚀 LAUNCHING {webui_choice} FROM ITS VENV...\n" + "="*50)
 
     try:
-        # Create a safe environment copy with additional variables
         launch_env = os.environ.copy()
-        # Note: We still set these as backup, but our matplotlib fix
-        # in the launch.py file should take precedence
         launch_env["MPLBACKEND"] = "Agg"
         launch_env["PYTHONPATH"] = str(webui_path)
         
-        # Ensure we're launching from the WebUI directory
         process = subprocess.Popen(
             command_list,
             cwd=webui_path,
@@ -129,12 +130,10 @@ def launch_webui(config: Dict[str, Any]) -> bool:
             env=launch_env
         )
 
-        # Stream output to the notebook
         for line in iter(process.stdout.readline, ''):
             sys.stdout.write(line)
             sys.stdout.flush()
         
-        # Check final result
         return_code = process.wait()
         if return_code != 0:
             log_to_unified(f"{webui_choice} exited with error code {return_code}.", "ERROR")
