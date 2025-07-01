@@ -2,10 +2,10 @@ import gradio as gr
 import os
 import sys
 import json
+import ast
 from pathlib import Path
 from datetime import datetime
 import time
-import ast
 
 # --- Configuration ---
 def get_project_root():
@@ -21,28 +21,47 @@ sys.path.insert(0, str(scripts_path))
 
 # --- Data Loading ---
 def read_model_data(file_path, data_type):
-    if not file_path.exists(): return [f"Error: Data file not found at {file_path}"]
+    """
+    Version: 1.1.0 - Reimplemented with ast.literal_eval() for robustness
+    Reads model data from Python files safely using AST parsing
+    """
+    if not file_path.exists(): 
+        return [f"Error: Data file not found at {file_path}"]
+    
     try:
-        with open(file_path, 'r', encoding='utf-8') as f: content = f.read()
+        with open(file_path, 'r', encoding='utf-8') as f: 
+            content = f.read()
+        
         key_map = {'model': 'model_list', 'vae': 'vae_list', 'cnet': 'controlnet_list', 'lora': 'lora_list'}
         key = key_map.get(data_type)
-        if not key: return [f"Invalid data type: {data_type}"]
+        if not key: 
+            return [f"Invalid data type: {data_type}"]
+        
         start_pattern = f"{key} = {{"
         start_index = content.find(start_pattern)
-        if start_index == -1: return [f"Error: No dictionary found for '{key}'"]
+        if start_index == -1: 
+            return [f"Error: No dictionary found for '{key}'"]
+        
         dict_start_index = start_index + len(start_pattern) - 1
-        brace_count, end_index = 0, -1
-        for i, char in enumerate(content[dict_start_index:]):
+        brace_count, end_index = 1, -1
+        
+        for i, char in enumerate(content[dict_start_index+1:], 1):
             if char == '{': brace_count += 1
-            elif char == '}': brace_count -= 1
-            if brace_count == 0:
-                end_index = dict_start_index + i + 1
-                break
-        if end_index == -1: return ["Error: Could not find closing brace for dictionary."]
+            elif char == '}': 
+                brace_count -= 1
+                if brace_count == 0:
+                    end_index = dict_start_index + i + 1
+                    break
+        
+        if end_index == -1: 
+            return ["Error: Could not find closing brace for dictionary."]
+        
         dict_str = content[dict_start_index:end_index]
         data_dict = ast.literal_eval(dict_str)
         names = list(data_dict.keys())
+        
         return ["none"] + names if names else ["none"]
+    
     except Exception as e:
         return [f"Error parsing {file_path} for '{data_type}': {e}"]
 
@@ -138,12 +157,10 @@ def launch_trinity_configuration_hub():
         interface = create_trinity_interface()
         port = int(os.environ.get('TRINITY_CONFIG_PORT', 7860))
         
-        # --- THIS IS THE CRITICAL FIX ---
-        # Added share=True to generate the public link
         interface.launch(
             server_name="0.0.0.0", 
             server_port=port, 
-            share=True, # <-- THIS IS THE FIX
+            share=True,
             quiet=False, 
             show_error=True, 
             inline=False
@@ -154,4 +171,3 @@ def launch_trinity_configuration_hub():
 
 if __name__ == "__main__":
     launch_trinity_configuration_hub()
-
