@@ -1,0 +1,399 @@
+/* Trinity Debug UI Styles */
+/* Created: 2025-06-29 (Emergency Fix #4 - Missing Assets) */
+/* Updated: 2025-06-30 (Verbose Debugging Toggle Restoration) */
+
+/* Verbose Debug Toggle */
+.trinity-verbose-toggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 152, 0, 0.9);
+    border: 2px solid #ff9800;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 10001;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.trinity-verbose-toggle:hover {
+    background: rgba(255, 152, 0, 1);
+    transform: scale(1.05);
+}
+
+.trinity-verbose-toggle.active {
+    background: rgba(76, 175, 80, 0.9);
+    border-color: #4CAF50;
+}
+
+/* Verbose Debug Output */
+.trinity-verbose-output {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    height: 300px;
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #00ff00;
+    z-index: 9999;
+    overflow-y: auto;
+    display: none;
+    backdrop-filter: blur(5px);
+}
+
+.trinity-verbose-output.active {
+    display: block;
+    animation: slideUpIn 0.3s ease;
+}
+
+.trinity-verbose-line {
+    margin: 2px 0;
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+.trinity-verbose-line.success { color: #4CAF50; }
+.trinity-verbose-line.error { color: #f44336; }
+.trinity-verbose-line.warning { color: #ff9800; }
+.trinity-verbose-line.info { color: #2196f3; }
+.trinity-verbose-line.debug { color: #9c27b0; }
+
+.trinity-debug {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 300px;
+    max-height: 80vh;
+    background: rgba(20, 20, 20, 0.95);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #ffffff;
+    z-index: 10000;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    display: none;
+}
+
+.trinity-debug.active {
+    display: block;
+    animation: slideInRight 0.3s ease;
+}
+
+.trinity-debug-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trinity-debug-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+.trinity-debug-close {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trinity-debug-close:hover {
+    color: #F44336;
+}
+
+.trinity-debug-content {
+    max-height: calc(80vh - 80px);
+    overflow-y: auto;
+}
+
+.trinity-debug-section {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    border-left: 3px solid #4CAF50;
+}
+
+.trinity-debug-section-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: #4CAF50;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.trinity-debug-item {
+    margin: 5px 0;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trinity-debug-item:last-child {
+    border-bottom: none;
+}
+
+.trinity-debug-label {
+    color: #888;
+    margin-right: 10px;
+    min-width: 80px;
+    display: inline-block;
+}
+
+.trinity-debug-value {
+    color: #ffffff;
+    word-break: break-all;
+}
+
+.trinity-debug-value.success {
+    color: #4CAF50;
+}
+
+.trinity-debug-value.warning {
+    color: #FFC107;
+}
+
+.trinity-debug-value.error {
+    color: #F44336;
+}
+
+.trinity-debug-log {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    padding: 8px;
+    margin: 10px 0;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 11px;
+}
+
+.trinity-debug-log-entry {
+    margin: 2px 0;
+    padding: 2px 0;
+}
+
+.trinity-debug-timestamp {
+    color: #666;
+    margin-right: 8px;
+}
+
+.trinity-debug-level {
+    font-weight: bold;
+    margin-right: 8px;
+    min-width: 50px;
+    display: inline-block;
+}
+
+.trinity-debug-level.info { color: #2196F3; }
+.trinity-debug-level.success { color: #4CAF50; }
+.trinity-debug-level.warning { color: #FFC107; }
+.trinity-debug-level.error { color: #F44336; }
+.trinity-debug-level.debug { color: #9C27B0; }
+
+.trinity-debug-toggle {
+    position: fixed;
+    top: 50px;
+    right: 10px;
+    background: rgba(33, 150, 243, 0.9);
+    border: 2px solid #2196f3;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 10002;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trinity-debug-toggle:hover {
+    background: rgba(33, 150, 243, 1);
+    transform: scale(1.1);
+}
+
+.trinity-debug-toggle.active {
+    background: rgba(244, 67, 54, 0.9);
+    border-color: rgba(244, 67, 54, 0.3);
+}
+
+.trinity-debug-stats {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 15px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.trinity-debug-stats div {
+    margin: 2px 0;
+}
+
+.trinity-debug-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+/* Performance metrics */
+.trinity-performance {
+    margin: 10px 0;
+}
+
+.trinity-performance-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    margin: 5px 0;
+    overflow: hidden;
+}
+
+.trinity-performance-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.trinity-performance-fill.cpu {
+    background: linear-gradient(90deg, #4CAF50, #FFC107, #F44336);
+}
+
+.trinity-performance-fill.memory {
+    background: linear-gradient(90deg, #2196F3, #9C27B0, #F44336);
+}
+
+.trinity-performance-fill.network {
+    background: linear-gradient(90deg, #00BCD4, #4CAF50, #FFC107);
+}
+
+/* Animations */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideUpIn {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.trinity-debug-pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .trinity-debug {
+        width: calc(100vw - 20px);
+        right: 10px;
+        left: 10px;
+        max-height: 70vh;
+    }
+    
+    .trinity-debug-toggle {
+        right: 10px;
+    }
+    
+    .trinity-debug-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Scrollbar styling */
+.trinity-debug-content::-webkit-scrollbar,
+.trinity-debug-log::-webkit-scrollbar {
+    width: 6px;
+}
+
+.trinity-debug-content::-webkit-scrollbar-track,
+.trinity-debug-log::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.trinity-debug-content::-webkit-scrollbar-thumb,
+.trinity-debug-log::-webkit-scrollbar-thumb {
+    background: rgba(76, 175, 80, 0.5);
+    border-radius: 3px;
+}
+
+.trinity-debug-content::-webkit-scrollbar-thumb:hover,
+.trinity-debug-log::-webkit-scrollbar-thumb:hover {
+    background: rgba(76, 175, 80, 0.7);
+}
+
+.trinity-debug-logs::-webkit-scrollbar,
+.trinity-verbose-output::-webkit-scrollbar {
+    width: 6px;
+}
+
+.trinity-debug-logs::-webkit-scrollbar-track,
+.trinity-verbose-output::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.trinity-debug-logs::-webkit-scrollbar-thumb,
+.trinity-verbose-output::-webkit-scrollbar-thumb {
+    background: rgba(76, 175, 80, 0.6);
+    border-radius: 3px;
+}
+
+.trinity-debug-logs::-webkit-scrollbar-thumb:hover,
+.trinity-verbose-output::-webkit-scrollbar-thumb:hover {
+    background: rgba(76, 175, 80, 0.8);
+}
+
+/* Status indicators */
+.trinity-debug-log.success { color: #4CAF50; }
+.trinity-debug-log.error { color: #f44336; }
+.trinity-debug-log.warning { color: #ff9800; }
+.trinity-debug-log.info { color: #2196f3; }

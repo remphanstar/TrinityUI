@@ -1,0 +1,109 @@
+/* --- Trinity HUD --- */
+.trinity-hud-container {
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    color: #e2e8f0;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 15px 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    position: relative;
+}
+.trinity-hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #334155;
+}
+.trinity-hud-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #93c5fd; /* Light Blue */
+    text-shadow: 0 0 5px rgba(147, 197, 253, 0.3);
+}
+.trinity-hud-version {
+    font-size: 12px;
+    background-color: rgba(147, 197, 253, 0.1);
+    color: #93c5fd;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #3b82f6;
+}
+.trinity-hud-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.trinity-hud-button {
+    background: #334155;
+    color: #cbd5e1;
+    border: 1px solid #475569;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.trinity-hud-button:hover {
+    background: #475569;
+    border-color: #64748b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+.trinity-hud-button:active {
+    transform: translateY(0);
+}
+.trinity-hud-log-container {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    height: 350px;
+    overflow-y: scroll;
+    padding: 15px;
+    font-family: 'Consolas', 'Menlo', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    scroll-behavior: smooth;
+}
+.trinity-hud-log-container::-webkit-scrollbar {
+    width: 8px;
+}
+.trinity-hud-log-container::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+.trinity-hud-log-container::-webkit-scrollbar-thumb {
+    background-color: #475569;
+    border-radius: 4px;
+}
+.trinity-hud-log-entry {
+    display: flex;
+    margin-bottom: 2px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+.trinity-hud-log-timestamp {
+    color: #64748b;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+.trinity-hud-log-level {
+    font-weight: bold;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+.trinity-hud-log-message {
+    flex-grow: 1;
+}
+/* Log Level Colors */
+.trinity-log-INFO { color: #60a5fa; }
+.trinity-log-SUCCESS { color: #34d399; }
+.trinity-log-WARNING { color: #facc15; }
+.trinity-log-ERROR { color: #f87171; }
+.trinity-log-DEBUG { color: #a78bfa; }
