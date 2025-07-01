@@ -1,8 +1,9 @@
-# scripts/manage_venvs.py (Aria2c Acceleration Fix)
+# scripts/manage_venvs.py (Matplotlib Fix + Aria2c Acceleration)
 import os
 import sys
 import subprocess
 import json
+import re
 from pathlib import Path
 
 PROJECT_ROOT = Path.cwd()
@@ -24,7 +25,8 @@ TOOL_CONFIG = {
             "pip install numpy==1.26.4",
             "pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu121",
             "pip install xformers==0.0.23.post1 --index-url https://download.pytorch.org/whl/cu121",
-        ]
+        ],
+        "launch_files": ["launch.py", "webui.py"],
     },
     "Forge": {
         "repo": "https://github.com/lllyasviel/stable-diffusion-webui-forge.git",
@@ -33,7 +35,18 @@ TOOL_CONFIG = {
         "post_install": [
             "pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121",
             "pip install xformers"
-        ]
+        ],
+        "launch_files": ["launch.py", "webui.py"],
+    },
+    "ComfyUI": {
+        "repo": "https://github.com/comfyanonymous/ComfyUI.git", 
+        "python_version": "3.10",
+        "reqs_file": "requirements.txt",
+        "post_install": [
+            "pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu121",
+            "pip install xformers==0.0.23.post1 --index-url https://download.pytorch.org/whl/cu121",
+        ],
+        "launch_files": ["main.py"],
     },
 }
 
@@ -41,7 +54,6 @@ def log_message(message):
     print(f"[VenvManager] {message}")
 
 def run_command_with_live_output(command, cwd):
-    # This function remains the same
     log_message(f"Executing: {command}")
     try:
         process = subprocess.Popen(
@@ -86,6 +98,54 @@ def fast_pip_install(venv_pip_path, requirements_file_path, cwd):
     pip_offline_cmd = f"\"{venv_pip_path}\" install --no-index --find-links=\"{PIP_CACHE_DIR}\" -r \"{requirements_file_path}\""
     return run_command_with_live_output(pip_offline_cmd, cwd=cwd)
 
+def inject_matplotlib_fix(tool_path, launch_files):
+    """
+    Version: 1.0.0 - New function to inject matplotlib.use('Agg') fix into launch files
+    Adds a matplotlib backend fix at the beginning of Python files to prevent backend conflicts
+    """
+    log_message(f"Injecting matplotlib backend fix...")
+    
+    for launch_file in launch_files:
+        file_path = tool_path / launch_file
+        if not file_path.exists():
+            log_message(f"Warning: Launch file {launch_file} not found, skipping matplotlib fix")
+            continue
+            
+        try:
+            content = file_path.read_text(encoding='utf-8')
+            
+            # Check if fix is already applied
+            if "matplotlib.use('Agg')" in content:
+                log_message(f"Matplotlib fix already present in {launch_file}")
+                continue
+                
+            # Prepare the fix
+            fix_code = (
+                "# Trinity matplotlib backend fix - MPLBACKEND=Agg\n"
+                "import sys\n"
+                "try:\n"
+                "    import matplotlib\n"
+                "    matplotlib.use('Agg')\n"
+                "except ImportError:\n"
+                "    pass\n\n"
+            )
+            
+            # Find the right place to insert the code
+            if content.startswith("#!/"):
+                # Handle shebang - insert after it
+                lines = content.splitlines()
+                content = lines[0] + "\n" + fix_code + "\n".join(lines[1:])
+            else:
+                # Insert at the beginning
+                content = fix_code + content
+                
+            # Write the modified content back to the file
+            file_path.write_text(content, encoding='utf-8')
+            log_message(f"✅ Successfully injected matplotlib fix into {launch_file}")
+            
+        except Exception as e:
+            log_message(f"❌ Error injecting matplotlib fix into {launch_file}: {e}")
+
 def setup_tool(tool_name, config):
     log_message(f"--- Setting up {tool_name} ---")
     tool_path = WEBUI_ROOT / tool_name
@@ -102,8 +162,7 @@ def setup_tool(tool_name, config):
         if not run_command_with_live_output(f"{python_exe} -m venv {venv_path}", cwd=tool_path):
             return False
 
-    # --- THIS IS THE FIX ---
-    # Step 2.5: Upgrade pip inside the newly created venv
+    # Upgrade pip inside the newly created venv
     venv_pip = venv_path / "bin" / "pip"
     log_message("Upgrading pip in virtual environment...")
     if not run_command_with_live_output(f"\"{venv_pip}\" install --upgrade pip", cwd=tool_path):
@@ -121,6 +180,12 @@ def setup_tool(tool_name, config):
             full_cmd = cmd.replace("pip", str(venv_pip))
             if not run_command_with_live_output(full_cmd, cwd=tool_path):
                 return False
+    
+    # Apply matplotlib backend fix to launch files
+    if "launch_files" in config:
+        inject_matplotlib_fix(tool_path, config["launch_files"])
+    else:
+        log_message("No launch files specified for matplotlib fix")
 
     log_message(f"✅ {tool_name} setup complete!")
     return True
