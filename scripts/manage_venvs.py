@@ -1,4 +1,4 @@
-# scripts/manage_venvs.py (Matplotlib Fix + Aria2c Acceleration)
+# scripts/manage_venvs.py (Matplotlib Fix + Aria2c Acceleration) - CORRECTED VERSION
 import os
 import sys
 import subprocess
@@ -100,10 +100,21 @@ def fast_pip_install(venv_pip_path, requirements_file_path, cwd):
 
 def inject_matplotlib_fix(tool_path, launch_files):
     """
-    Version: 1.0.0 - New function to inject matplotlib.use('Agg') fix into launch files
-    Adds a matplotlib backend fix at the beginning of Python files to prevent backend conflicts
+    Version: 2.0.0 - CORRECTED matplotlib fix injection that properly handles from __future__ imports
+    Adds a matplotlib backend fix at the correct position in Python files to prevent backend conflicts
     """
     log_message(f"Injecting matplotlib backend fix...")
+    
+    fix_code = (
+        "# Trinity matplotlib backend fix - MPLBACKEND=Agg\n"
+        "import os\n"
+        "os.environ['MPLBACKEND'] = 'Agg'\n"
+        "try:\n"
+        "    import matplotlib\n"
+        "    matplotlib.use('Agg')\n"
+        "except ImportError:\n"
+        "    pass\n"
+    )
     
     for launch_file in launch_files:
         file_path = tool_path / launch_file
@@ -118,33 +129,77 @@ def inject_matplotlib_fix(tool_path, launch_files):
             if "matplotlib.use('Agg')" in content:
                 log_message(f"Matplotlib fix already present in {launch_file}")
                 continue
-                
-            # Prepare the fix
-            fix_code = (
-                "# Trinity matplotlib backend fix - MPLBACKEND=Agg\n"
-                "import sys\n"
-                "try:\n"
-                "    import matplotlib\n"
-                "    matplotlib.use('Agg')\n"
-                "except ImportError:\n"
-                "    pass\n\n"
-            )
             
-            # Find the right place to insert the code
-            if content.startswith("#!/"):
-                # Handle shebang - insert after it
-                lines = content.splitlines()
-                content = lines[0] + "\n" + fix_code + "\n".join(lines[1:])
-            else:
-                # Insert at the beginning
-                content = fix_code + content
+            lines = content.splitlines()
+            insert_position = 0
+            
+            # Find the correct insertion point
+            for i, line in enumerate(lines):
+                stripped = line.strip()
                 
-            # Write the modified content back to the file
-            file_path.write_text(content, encoding='utf-8')
-            log_message(f"✅ Successfully injected matplotlib fix into {launch_file}")
+                # Skip shebang
+                if stripped.startswith('#!'):
+                    insert_position = i + 1
+                    continue
+                
+                # Skip initial comments and docstrings
+                if (stripped.startswith('#') or 
+                    stripped.startswith('"""') or 
+                    stripped.startswith("'''") or
+                    stripped == ""):
+                    insert_position = i + 1
+                    continue
+                
+                # Handle future imports - they MUST come first after shebang/comments
+                if stripped.startswith('from __future__ import'):
+                    insert_position = i + 1
+                    continue
+                
+                # Stop at first non-future import or actual code
+                break
+            
+            # Insert the matplotlib fix at the correct position
+            fix_lines = fix_code.strip().split('\n')
+            
+            # Add empty line before fix if needed for readability
+            if insert_position < len(lines) and lines[insert_position].strip() != "":
+                fix_lines.append("")
+            
+            # Insert fix lines at the correct position
+            for i, fix_line in enumerate(fix_lines):
+                lines.insert(insert_position + i, fix_line)
+            
+            # Write back to file
+            new_content = '\n'.join(lines)
+            file_path.write_text(new_content, encoding='utf-8')
+            log_message(f"✅ Successfully injected matplotlib fix into {launch_file} at position {insert_position + 1}")
             
         except Exception as e:
             log_message(f"❌ Error injecting matplotlib fix into {launch_file}: {e}")
+            # Try to clean up any broken fix
+            try:
+                content = file_path.read_text(encoding='utf-8')
+                # Remove any existing Trinity matplotlib fix that might be broken
+                lines = content.splitlines()
+                clean_lines = []
+                skip_next = False
+                
+                for line in lines:
+                    if "Trinity matplotlib backend fix" in line:
+                        skip_next = True
+                        continue
+                    if skip_next and any(x in line for x in ["import os", "matplotlib", "os.environ", "except", "pass"]):
+                        continue
+                    if skip_next and line.strip() and not any(x in line for x in ["import", "os.environ", "matplotlib", "except", "pass"]):
+                        skip_next = False
+                    
+                    if not skip_next:
+                        clean_lines.append(line)
+                
+                file_path.write_text('\n'.join(clean_lines), encoding='utf-8')
+                log_message(f"🔧 Cleaned up broken matplotlib fix in {launch_file}")
+            except:
+                log_message(f"❌ Could not clean up {launch_file}")
 
 def setup_tool(tool_name, config):
     log_message(f"--- Setting up {tool_name} ---")
