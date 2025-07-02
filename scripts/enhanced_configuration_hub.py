@@ -1,6 +1,6 @@
 """
 Enhanced Trinity Configuration Hub with Installation Integration
-Version: 1.4.2 - Fixed Gradio component input error
+Version: 1.4.3 - Fixed text color and cell completion issues
 """
 
 import gradio as gr
@@ -35,7 +35,7 @@ except ImportError:
     InstallationProgressTracker = None
     run_installation = None
 
-TRINITY_VERSION = "1.4.2"
+TRINITY_VERSION = "1.4.3"
 CONFIG_PATH = PROJECT_ROOT / "trinity_config.json"
 LOG_FILE = PROJECT_ROOT / "trinity_unified.log"
 
@@ -142,13 +142,14 @@ def update_progress_displays(update_type, data):
     global progress_displays
     try:
         if update_type == "dependency_progress" and "dependency" in progress_displays:
-            progress_displays["dependency"].update(value=data)
+            # Use light text color for dark background
+            progress_displays["dependency"].update(value=f'<div style="color: #e8e8e8; font-family: monospace; white-space: pre-wrap;">{data}</div>')
         elif update_type == "asset_progress" and "asset" in progress_displays:
             asset_html = ""
             for asset in data:
                 status_icon = {"success": "✅", "error": "❌", "downloading": "⬇️", "pending": "⏳"}.get(asset.get('status', 'pending'), "⏳")
-                asset_html += f'<div style="padding: 5px; border-bottom: 1px solid #eee;"><span style="margin-right: 10px;">{status_icon}</span>{asset["name"]}</div>'
-            progress_displays["asset"].update(value=f'<div style="max-height: 300px; overflow-y: auto;">{asset_html}</div>')
+                asset_html += f'<div style="padding: 5px; border-bottom: 1px solid #444; color: #e8e8e8;"><span style="margin-right: 10px;">{status_icon}</span>{asset["name"]}</div>'
+            progress_displays["asset"].update(value=f'<div style="max-height: 300px; overflow-y: auto; color: #e8e8e8;">{asset_html}</div>')
         elif update_type == "completion" and "completion" in progress_displays:
             progress_displays["completion"].update(visible=data)
     except Exception as e:
@@ -160,6 +161,7 @@ def run_installation_thread(config_data):
     
     try:
         installation_in_progress = True
+        print("📝 Starting installation thread...")
         
         if InstallationProgressTracker and run_installation:
             # Create progress tracker with callbacks
@@ -168,29 +170,38 @@ def run_installation_thread(config_data):
                 gradio_callback=update_progress_displays
             )
             
+            print("📝 Installation tracker created, starting installation...")
+            
             # Run installation
             success = run_installation(config_data, installation_tracker)
+            
+            print(f"📝 Installation completed with success: {success}")
             return success
         else:
             log_to_unified("Installation manager not available", "ERROR")
+            print("❌ Installation manager not available")
             return False
         
     except Exception as e:
         log_to_unified(f"Installation thread failed: {e}", "ERROR")
+        print(f"❌ Installation thread failed: {e}")
         return False
     finally:
         installation_in_progress = False
+        print("📝 Installation thread finished")
 
 def save_config_and_install(webui_choice, sd_version, models, vaes, controlnets, loras, arguments, theme_accent, civitai_token, ngrok_token, tunnel_choice):
-    """Save configuration and start installation - Fixed to not use HTML components as inputs"""
+    """Save configuration and start installation"""
     global current_config, installation_in_progress, progress_displays
+    
+    print(f"📝 Save button clicked for {webui_choice}")
     
     if installation_in_progress:
         return (
             gr.update(value="⚠️ Installation already in progress..."),
             gr.update(visible=True),
-            gr.update(value="<div style='color: orange;'>Installation in progress...</div>"),
-            gr.update(value="<div style='color: orange;'>Please wait...</div>")
+            gr.update(value='<div style="color: #ffa500; padding: 20px; text-align: center;">Installation in progress...</div>'),
+            gr.update(value='<div style="color: #ffa500; padding: 20px; text-align: center;">Please wait...</div>')
         )
     
     session_id = f"TR_{int(time.time())}"
@@ -215,6 +226,7 @@ def save_config_and_install(webui_choice, sd_version, models, vaes, controlnets,
             json.dump(config_data, f, indent=4)
         
         current_config = config_data
+        print(f"📝 Configuration saved to {CONFIG_PATH}")
         
         # Start installation in background thread
         installation_thread = threading.Thread(
@@ -223,20 +235,22 @@ def save_config_and_install(webui_choice, sd_version, models, vaes, controlnets,
             daemon=True
         )
         installation_thread.start()
+        print("📝 Installation thread started")
         
-        success_msg = f"✅ Config saved for {webui_choice}. Installation started..."
+        success_msg = f"✅ Config saved for {webui_choice}. Installation started in background..."
         log_to_unified(success_msg, "SUCCESS")
         
         return (
             gr.update(value=success_msg),
             gr.update(visible=True),
-            gr.update(value="<div style='color: blue;'>Starting dependency installation...</div>"),
-            gr.update(value="<div style='color: gray;'>Preparing asset downloads...</div>")
+            gr.update(value='<div style="color: #4CAF50; padding: 20px; text-align: center; font-weight: bold;">Starting dependency installation...</div>'),
+            gr.update(value='<div style="color: #e8e8e8; padding: 20px; text-align: center;">Preparing asset downloads...</div>')
         )
         
     except Exception as e:
         error_msg = f"❌ Failed to save config: {e}"
         log_to_unified(error_msg, "ERROR")
+        print(f"❌ {error_msg}")
         return (
             gr.update(value=error_msg),
             gr.update(visible=False),
@@ -316,19 +330,19 @@ def create_trinity_interface():
         
         status_display = gr.Markdown("Ready to configure and install.")
         
-        # Progress display section - Create components to be updated
+        # Progress display section
         with gr.Accordion("📊 Installation Progress", open=False, visible=False) as progress_accordion:
             gr.Markdown("### Real-time Installation Progress")
             
             with gr.Tab("Dependency Installation"):
                 dependency_progress = gr.HTML(
-                    value="<div style='padding: 20px; text-align: center; color: gray;'>Waiting for installation to start...</div>",
+                    value='<div style="padding: 20px; text-align: center; color: #e8e8e8; background: #2d2d2d; border-radius: 8px;">Waiting for installation to start...</div>',
                     elem_id="dependency-progress"
                 )
             
             with gr.Tab("Asset Downloads"):
                 asset_progress = gr.HTML(
-                    value="<div style='padding: 20px; text-align: center; color: gray;'>Waiting for downloads to start...</div>",
+                    value='<div style="padding: 20px; text-align: center; color: #e8e8e8; background: #2d2d2d; border-radius: 8px;">Waiting for downloads to start...</div>',
                     elem_id="asset-progress"
                 )
         
@@ -353,7 +367,7 @@ def create_trinity_interface():
             outputs=[arguments_textbox]
         )
         
-        # Fixed save button click - removed HTML components from inputs
+        # Save button click handler
         save_button.click(
             fn=save_config_and_install,
             inputs=[
@@ -378,6 +392,10 @@ def launch_trinity_configuration_hub():
         log_to_unified("Initializing Enhanced Config Hub with Installation...")
         interface = create_trinity_interface()
         port = int(os.environ.get('TRINITY_CONFIG_PORT', 7860))
+        
+        print(f"🚀 Launching Trinity Configuration Hub on port {port}")
+        print("🔧 Installation will run in background after configuration save")
+        print("📊 Progress will be visible in the Installation Progress tab")
         
         interface.launch(
             server_name="0.0.0.0", 
