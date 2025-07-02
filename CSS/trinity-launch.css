@@ -1,0 +1,229 @@
+/* Trinity Launch Cell Styles */
+.trinity-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.trinity-header h1 {
+    margin: 0;
+    font-size: 2.2em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.trinity-header p {
+    margin: 10px 0 0 0;
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+.status-widget {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.status-starting {
+    background: #2196F3;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.status-ready {
+    background: #4CAF50;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.status-error {
+    background: #F44336;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.status-warning {
+    background: #FF9800;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.status-stopped {
+    background: #607D8B;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.output-widget {
+    height: 450px;
+    overflow-y: auto;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    padding: 10px;
+}
+
+.gradio-announcement {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin: 15px 0;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    animation: gradio-pulse 2s ease-in-out;
+}
+
+@keyframes gradio-pulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.02); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.gradio-announcement h2 {
+    margin: 0 0 15px 0;
+    font-size: 1.8em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.gradio-link {
+    font-size: 18px;
+    font-weight: bold;
+    color: #FFD700;
+    text-decoration: none;
+    padding: 12px 25px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    display: inline-block;
+    margin: 10px;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255,215,0,0.5);
+}
+
+.gradio-link:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.launch-command {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border-left: 4px solid #2196F3;
+}
+
+.launch-command code {
+    background: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    word-break: break-all;
+}
+
+.output-line {
+    margin: 3px 0;
+    font-size: 13px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.output-progress {
+    color: #4CAF50;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.output-loading {
+    color: #2196F3;
+    font-weight: 500;
+}
+
+.output-error {
+    color: #F44336;
+    font-weight: bold;
+    background: rgba(244, 67, 54, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.output-warning {
+    color: #FF9800;
+    font-weight: 500;
+    background: rgba(255, 152, 0, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.output-success {
+    color: #4CAF50;
+    font-weight: bold;
+    background: rgba(76, 175, 80, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.output-server {
+    color: #9C27B0;
+    font-weight: bold;
+    background: rgba(156, 39, 176, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.output-memory {
+    color: #607D8B;
+    font-weight: 500;
+}
+
+.output-default {
+    color: #333;
+}
+
+.completion-summary {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.completion-summary h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.5em;
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
