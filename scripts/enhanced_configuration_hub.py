@@ -1,6 +1,6 @@
 """
 Enhanced Trinity Configuration Hub with Installation Integration
-Version: 1.4.0 - Combined Configuration and Installation
+Version: 1.4.1 - Fixed Gradio launch parameters
 """
 
 import gradio as gr
@@ -35,7 +35,7 @@ except ImportError:
     InstallationProgressTracker = None
     run_installation = None
 
-TRINITY_VERSION = "1.4.0"
+TRINITY_VERSION = "1.4.1"
 CONFIG_PATH = PROJECT_ROOT / "trinity_config.json"
 LOG_FILE = PROJECT_ROOT / "trinity_unified.log"
 
@@ -391,8 +391,7 @@ def launch_trinity_configuration_hub():
             quiet=False, 
             show_error=True, 
             inline=False,
-            favicon_path=None,
-            show_tips=False
+            favicon_path=None
         )
         
     except Exception as e:
