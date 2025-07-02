@@ -1,6 +1,6 @@
 """
 Enhanced Trinity Configuration Hub with Installation Integration
-Version: 1.5.0 - Fixed real-time Gradio progress updates
+Version: 1.5.1 - Fixed Gradio component update methods
 """
 
 import gradio as gr
@@ -35,7 +35,7 @@ except ImportError:
     InstallationProgressTracker = None
     run_installation = None
 
-TRINITY_VERSION = "1.5.0"
+TRINITY_VERSION = "1.5.1"
 CONFIG_PATH = PROJECT_ROOT / "trinity_config.json"
 LOG_FILE = PROJECT_ROOT / "trinity_unified.log"
 
@@ -111,10 +111,13 @@ installation_in_progress = False
 installation_tracker = None
 current_config = None
 
-# Global progress components - will be set when interface is created
-dependency_progress_component = None
-asset_progress_component = None
-progress_accordion_component = None
+# Global progress components - store references for direct updates
+progress_state = {
+    "dependency_component": None,
+    "asset_component": None,
+    "accordion_visible": False,
+    "accordion_open": False
+}
 
 def update_model_lists_for_version(is_xl):
     data_file = xl_model_data_file if is_xl else model_data_file
@@ -143,28 +146,27 @@ def update_model_lists_for_version(is_xl):
 
 def gradio_progress_callback(update_type, data):
     """Callback for real-time Gradio progress updates"""
-    global dependency_progress_component, asset_progress_component, progress_accordion_component
+    global progress_state
     
     try:
         print(f"📊 [GRADIO] Progress update: {update_type}")
         
         if update_type == "dependency_progress":
-            if dependency_progress_component is not None:
-                # Format dependency log for better readability
-                formatted_data = str(data).replace('\n', '<br>') if data else "Starting..."
-                html_content = f'''
-                <div style="color: #e8e8e8; font-family: 'Courier New', monospace; 
-                           background: #1a1a1a; padding: 15px; border-radius: 8px; 
-                           max-height: 400px; overflow-y: auto; border: 1px solid #333;">
-                    {formatted_data}
-                </div>
-                '''
-                # Update the component directly
-                dependency_progress_component.update(value=html_content)
-                print(f"📊 [GRADIO] Updated dependency progress display")
+            # Format dependency log for better readability
+            formatted_data = str(data).replace('\n', '<br>') if data else "Starting..."
+            html_content = f'''
+            <div style="color: #e8e8e8; font-family: 'Courier New', monospace; 
+                       background: #1a1a1a; padding: 15px; border-radius: 8px; 
+                       max-height: 400px; overflow-y: auto; border: 1px solid #333;">
+                {formatted_data}
+            </div>
+            '''
+            # Store the updated content - will be returned by get_progress_updates
+            progress_state["dependency_content"] = html_content
+            print(f"📊 [GRADIO] Updated dependency progress display")
         
         elif update_type == "asset_progress":
-            if asset_progress_component is not None and isinstance(data, list):
+            if isinstance(data, list):
                 asset_html = ""
                 for asset in data:
                     status_icon = {
@@ -197,27 +199,51 @@ def gradio_progress_callback(update_type, data):
                     {asset_html}
                 </div>
                 '''
-                # Update the component directly
-                asset_progress_component.update(value=html_content)
+                # Store the updated content
+                progress_state["asset_content"] = html_content
                 print(f"📊 [GRADIO] Updated asset progress display with {len(data)} items")
         
         elif update_type == "completion":
-            if progress_accordion_component is not None:
-                progress_accordion_component.update(visible=True, open=True)
-                print(f"📊 [GRADIO] Showed completion section")
+            progress_state["accordion_visible"] = True
+            progress_state["accordion_open"] = True
+            print(f"📊 [GRADIO] Set completion flags")
     
     except Exception as e:
         print(f"❌ [GRADIO] Error in progress callback: {e}")
         import traceback
         traceback.print_exc()
 
+def get_progress_updates():
+    """Function to return current progress state for Gradio updates"""
+    global progress_state
+    
+    # Return current progress content and accordion state
+    dependency_content = progress_state.get("dependency_content", 
+        '<div style="padding: 20px; text-align: center; color: #888; background: #1a1a1a; border-radius: 8px; border: 1px solid #333;">Waiting for installation to start...</div>')
+    
+    asset_content = progress_state.get("asset_content",
+        '<div style="padding: 20px; text-align: center; color: #888; background: #1a1a1a; border-radius: 8px; border: 1px solid #333;">Waiting for downloads to start...</div>')
+    
+    accordion_visible = progress_state.get("accordion_visible", False)
+    accordion_open = progress_state.get("accordion_open", False)
+    
+    return (
+        gr.update(visible=accordion_visible, open=accordion_open),
+        gr.update(value=dependency_content),
+        gr.update(value=asset_content)
+    )
+
 def run_installation_thread(config_data):
     """Run installation in background thread with real-time updates"""
-    global installation_in_progress, installation_tracker
+    global installation_in_progress, installation_tracker, progress_state
     
     try:
         installation_in_progress = True
         print("📝 [THREAD] Starting installation thread...")
+        
+        # Set accordion visible immediately
+        progress_state["accordion_visible"] = True
+        progress_state["accordion_open"] = True
         
         if InstallationProgressTracker and run_installation:
             # Create progress tracker with callbacks
@@ -267,8 +293,7 @@ def run_installation_thread(config_data):
 
 def save_config_and_install(webui_choice, sd_version, models, vaes, controlnets, loras, arguments, theme_accent, civitai_token, ngrok_token, tunnel_choice):
     """Save configuration and start installation with immediate progress feedback"""
-    global current_config, installation_in_progress
-    global dependency_progress_component, asset_progress_component, progress_accordion_component
+    global current_config, installation_in_progress, progress_state
     
     print(f"📝 [SAVE] Save button clicked for {webui_choice}")
     print(f"📝 [SAVE] Selected items - Models: {len(models)}, VAEs: {len(vaes)}, ControlNets: {len(controlnets)}, LoRAs: {len(loras)}")
@@ -306,8 +331,9 @@ def save_config_and_install(webui_choice, sd_version, models, vaes, controlnets,
         current_config = config_data
         print(f"📝 [SAVE] Configuration saved to {CONFIG_PATH}")
         
-        # Show progress section immediately
-        progress_accordion_component.update(visible=True, open=True)
+        # Set progress state for immediate UI updates
+        progress_state["accordion_visible"] = True
+        progress_state["accordion_open"] = True
         
         # Initialize progress displays
         initial_dep_html = '''
@@ -326,12 +352,9 @@ def save_config_and_install(webui_choice, sd_version, models, vaes, controlnets,
         </div>
         '''
         
-        # Update progress displays immediately
-        dependency_progress_component.update(value=initial_dep_html)
-        asset_progress_component.update(value=initial_asset_html)
-        
-        # Small delay to ensure UI updates are visible
-        time.sleep(0.1)
+        # Store initial content
+        progress_state["dependency_content"] = initial_dep_html
+        progress_state["asset_content"] = initial_asset_html
         
         # Start installation in background thread
         installation_thread = threading.Thread(
@@ -368,7 +391,7 @@ def save_config_and_install(webui_choice, sd_version, models, vaes, controlnets,
 
 def create_trinity_interface():
     """Create the enhanced Trinity interface with real-time installation progress"""
-    global dependency_progress_component, asset_progress_component, progress_accordion_component
+    global progress_state
     
     with gr.Blocks(theme=gr.themes.Base(), title="Trinity Configuration & Installation Hub") as interface:
         gr.Markdown(f"# 🚀 Trinity Configuration & Installation Hub v{TRINITY_VERSION}")
@@ -441,8 +464,6 @@ def create_trinity_interface():
         
         # Progress display section
         with gr.Accordion("📊 Installation Progress", open=False, visible=False) as progress_accordion:
-            progress_accordion_component = progress_accordion
-            
             gr.Markdown("### Real-time Installation Progress")
             gr.Markdown("📝 **Progress updates in real-time - both here and in notebook output**")
             
@@ -451,14 +472,19 @@ def create_trinity_interface():
                     value='<div style="padding: 20px; text-align: center; color: #888; background: #1a1a1a; border-radius: 8px; border: 1px solid #333;">Waiting for installation to start...</div>',
                     elem_id="dependency-progress"
                 )
-                dependency_progress_component = dependency_progress
             
             with gr.Tab("Asset Downloads"):
                 asset_progress = gr.HTML(
                     value='<div style="padding: 20px; text-align: center; color: #888; background: #1a1a1a; border-radius: 8px; border: 1px solid #333;">Waiting for downloads to start...</div>',
                     elem_id="asset-progress"
                 )
-                asset_progress_component = asset_progress
+        
+        # Auto-refresh progress every 2 seconds
+        refresh_timer = gr.Timer(2.0)
+        refresh_timer.tick(
+            fn=get_progress_updates,
+            outputs=[progress_accordion, dependency_progress, asset_progress]
+        )
         
         # Event handlers
         is_xl_checkbox.change(
