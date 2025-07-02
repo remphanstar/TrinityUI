@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .trinity-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .trinity-header h1 {
+            margin: 0;
+            font-size: 2.2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .trinity-header p {
+            margin: 10px 0 0 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="trinity-header">
+        <h1>🚀 TRINITY WEBUI LAUNCH</h1>
+        <p id="webui-info">Launching WebUI with real-time output display</p>
+    </div>
+    <script>
+        // Function to update WebUI name
+        function updateWebuiName(webuiName) {
+            document.getElementById('webui-info').textContent = `Launching ${webuiName} with real-time output display`;
+        }
+    </script>
+</body>
+</html>
