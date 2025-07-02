@@ -1,6 +1,6 @@
 """
 Enhanced Trinity Configuration Hub with Installation Integration
-Version: 1.4.1 - Fixed Gradio launch parameters
+Version: 1.4.2 - Fixed Gradio component input error
 """
 
 import gradio as gr
@@ -35,7 +35,7 @@ except ImportError:
     InstallationProgressTracker = None
     run_installation = None
 
-TRINITY_VERSION = "1.4.1"
+TRINITY_VERSION = "1.4.2"
 CONFIG_PATH = PROJECT_ROOT / "trinity_config.json"
 LOG_FILE = PROJECT_ROOT / "trinity_unified.log"
 
@@ -137,25 +137,22 @@ def update_model_lists_for_version(is_xl):
         log_to_unified(f"Error updating lists: {e}", "ERROR")
         return (gr.update(), gr.update(), gr.update(), gr.update())
 
-def gradio_progress_callback(update_type, data):
-    """Callback for Gradio progress updates"""
+def update_progress_displays(update_type, data):
+    """Update progress displays globally"""
     global progress_displays
     try:
         if update_type == "dependency_progress" and "dependency" in progress_displays:
-            # Update dependency progress in HTML component
             progress_displays["dependency"].update(value=data)
         elif update_type == "asset_progress" and "asset" in progress_displays:
-            # Update asset progress display
             asset_html = ""
             for asset in data:
                 status_icon = {"success": "✅", "error": "❌", "downloading": "⬇️", "pending": "⏳"}.get(asset.get('status', 'pending'), "⏳")
                 asset_html += f'<div style="padding: 5px; border-bottom: 1px solid #eee;"><span style="margin-right: 10px;">{status_icon}</span>{asset["name"]}</div>'
             progress_displays["asset"].update(value=f'<div style="max-height: 300px; overflow-y: auto;">{asset_html}</div>')
         elif update_type == "completion" and "completion" in progress_displays:
-            # Show/hide completion section
             progress_displays["completion"].update(visible=data)
     except Exception as e:
-        log_to_unified(f"Error in gradio callback: {e}", "ERROR")
+        log_to_unified(f"Error updating progress displays: {e}", "ERROR")
 
 def run_installation_thread(config_data):
     """Run installation in background thread"""
@@ -168,7 +165,7 @@ def run_installation_thread(config_data):
             # Create progress tracker with callbacks
             installation_tracker = InstallationProgressTracker(
                 notebook_callback=lambda msg: print(f"📝 {msg}", end=''),
-                gradio_callback=gradio_progress_callback
+                gradio_callback=update_progress_displays
             )
             
             # Run installation
@@ -184,8 +181,8 @@ def run_installation_thread(config_data):
     finally:
         installation_in_progress = False
 
-def save_config_and_install(webui_choice, sd_version, models, vaes, controlnets, loras, arguments, theme_accent, civitai_token, ngrok_token, tunnel_choice, progress_dependency, progress_asset, progress_accordion):
-    """Save configuration and start installation"""
+def save_config_and_install(webui_choice, sd_version, models, vaes, controlnets, loras, arguments, theme_accent, civitai_token, ngrok_token, tunnel_choice):
+    """Save configuration and start installation - Fixed to not use HTML components as inputs"""
     global current_config, installation_in_progress, progress_displays
     
     if installation_in_progress:
@@ -195,13 +192,6 @@ def save_config_and_install(webui_choice, sd_version, models, vaes, controlnets,
             gr.update(value="<div style='color: orange;'>Installation in progress...</div>"),
             gr.update(value="<div style='color: orange;'>Please wait...</div>")
         )
-    
-    # Store progress display references
-    progress_displays = {
-        "dependency": progress_dependency,
-        "asset": progress_asset,
-        "completion": progress_accordion
-    }
     
     session_id = f"TR_{int(time.time())}"
     config_data = {
@@ -256,9 +246,6 @@ def save_config_and_install(webui_choice, sd_version, models, vaes, controlnets,
 
 def create_trinity_interface():
     """Create the enhanced Trinity interface with installation integration"""
-    
-    # Load progress display HTML
-    progress_html = load_html_from_repo("trinity-progress-display.html")
     
     with gr.Blocks(theme=gr.themes.Base(), title="Trinity Configuration & Installation Hub") as interface:
         gr.Markdown(f"# 🚀 Trinity Configuration & Installation Hub v{TRINITY_VERSION}")
@@ -329,7 +316,7 @@ def create_trinity_interface():
         
         status_display = gr.Markdown("Ready to configure and install.")
         
-        # Progress display section
+        # Progress display section - Create components to be updated
         with gr.Accordion("📊 Installation Progress", open=False, visible=False) as progress_accordion:
             gr.Markdown("### Real-time Installation Progress")
             
@@ -345,6 +332,14 @@ def create_trinity_interface():
                     elem_id="asset-progress"
                 )
         
+        # Store progress displays globally for updates
+        global progress_displays
+        progress_displays = {
+            "dependency": dependency_progress,
+            "asset": asset_progress,
+            "completion": progress_accordion
+        }
+        
         # Event handlers
         is_xl_checkbox.change(
             fn=update_model_lists_for_version, 
@@ -358,13 +353,13 @@ def create_trinity_interface():
             outputs=[arguments_textbox]
         )
         
+        # Fixed save button click - removed HTML components from inputs
         save_button.click(
             fn=save_config_and_install,
             inputs=[
                 webui_dropdown, is_xl_checkbox, model_cbg, vae_cbg, 
                 controlnet_cbg, lora_cbg, arguments_textbox, theme_dropdown, 
-                civitai_token, ngrok_token, tunnel_choice,
-                dependency_progress, asset_progress, progress_accordion
+                civitai_token, ngrok_token, tunnel_choice
             ],
             outputs=[status_display, progress_accordion, dependency_progress, asset_progress]
         )
