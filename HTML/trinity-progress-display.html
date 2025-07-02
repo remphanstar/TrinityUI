@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .trinity-progress-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            border: 2px solid #e9ecef;
+        }
+        .progress-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .progress-section {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .progress-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .progress-item:last-child {
+            border-bottom: none;
+        }
+        .progress-status {
+            width: 30px;
+            text-align: center;
+            margin-right: 10px;
+        }
+        .progress-file {
+            flex: 1;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .progress-success {
+            color: #28a745;
+        }
+        .progress-error {
+            color: #dc3545;
+        }
+        .progress-downloading {
+            color: #007bff;
+        }
+        .progress-pending {
+            color: #6c757d;
+        }
+        .error-details {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #f1b0b7;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .installation-log {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .log-line {
+            margin: 2px 0;
+            padding: 1px 0;
+        }
+        .log-success {
+            color: #28a745;
+        }
+        .log-error {
+            color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .log-warning {
+            color: #fd7e14;
+        }
+        .log-info {
+            color: #007bff;
+        }
+        .completion-banner {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="trinity-progress-container">
+        <div class="progress-header">
+            <h3 id="progress-title">🔧 Installation Progress</h3>
+            <p id="progress-subtitle">Setting up your WebUI environment...</p>
+        </div>
+        
+        <div class="progress-section">
+            <h4>📦 Dependency Installation</h4>
+            <div id="dependency-progress" class="installation-log">
+                <div class="log-line">Waiting for installation to start...</div>
+            </div>
+        </div>
+        
+        <div class="progress-section">
+            <h4>📥 Asset Downloads</h4>
+            <div id="asset-progress">
+                <div class="progress-item">
+                    <span class="progress-status progress-pending">⏳</span>
+                    <span class="progress-file">Waiting for asset downloads...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="completion-section" style="display: none;">
+            <div class="completion-banner">
+                <h3>🎉 Installation Complete!</h3>
+                <p>Your WebUI is ready for launch. Proceed to the next cell.</p>
+            </div>
+        </div>
+        
+        <div id="error-section" style="display: none;">
+            <div class="progress-section">
+                <h4 style="color: #dc3545;">❌ Installation Errors</h4>
+                <div id="error-details" class="error-details"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function updateDependencyProgress(logText) {
+            const container = document.getElementById('dependency-progress');
+            container.innerHTML = logText;
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function updateAssetProgress(assets) {
+            const container = document.getElementById('asset-progress');
+            container.innerHTML = '';
+            
+            assets.forEach(asset => {
+                const item = document.createElement('div');
+                item.className = 'progress-item';
+                
+                let statusIcon, statusClass;
+                switch(asset.status) {
+                    case 'success':
+                        statusIcon = '✅';
+                        statusClass = 'progress-success';
+                        break;
+                    case 'error':
+                        statusIcon = '❌';
+                        statusClass = 'progress-error';
+                        break;
+                    case 'downloading':
+                        statusIcon = '⬇️';
+                        statusClass = 'progress-downloading';
+                        break;
+                    default:
+                        statusIcon = '⏳';
+                        statusClass = 'progress-pending';
+                }
+                
+                item.innerHTML = `
+                    <span class="progress-status ${statusClass}">${statusIcon}</span>
+                    <span class="progress-file">${asset.name}</span>
+                `;
+                
+                container.appendChild(item);
+                
+                if (asset.error) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error-details';
+                    errorDiv.textContent = asset.error;
+                    item.appendChild(errorDiv);
+                }
+            });
+        }
+        
+        function showCompletion(success = true) {
+            const completionSection = document.getElementById('completion-section');
+            const errorSection = document.getElementById('error-section');
+            
+            if (success) {
+                completionSection.style.display = 'block';
+                errorSection.style.display = 'none';
+            } else {
+                completionSection.style.display = 'none';
+                errorSection.style.display = 'block';
+            }
+        }
+        
+        function showError(errorText) {
+            const errorSection = document.getElementById('error-section');
+            const errorDetails = document.getElementById('error-details');
+            errorDetails.textContent = errorText;
+            errorSection.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
